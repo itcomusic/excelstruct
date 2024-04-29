@@ -4,6 +4,8 @@
 [![pkg-img]][pkg-url]
 [![coverage-img]][coverage-url]
 
+This is a Go excel package wraps [excelize](https://github.com/qax-os/excelize) with encoding/decoding struct.
+
 ## Installation
 
 Go version 1.21+
