@@ -6,6 +6,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// WWorkSpace is a workspace for writing data to a file.
 type WWorkSpace[T any] struct {
 	*excelize.File
 	enc        *encodeState
@@ -22,12 +23,6 @@ func NewWWorkSpace[T any](w *Write, opts WWorkSpaceOptions) (*WWorkSpace[T], err
 		return nil, fmt.Errorf("excelstruct: new sheet %q: %w", opts.SheetName, err)
 	}
 
-	// init style
-	style, err := initStyle(w.File, opts.Style)
-	if err != nil {
-		return nil, fmt.Errorf("excelstruct: init style: %w", err)
-	}
-
 	title, err := newTitleFromStruct[T](titleConfig{
 		tag:               w.config.structTag,
 		rowIndex:          opts.TitleRowIndex,
@@ -38,7 +33,6 @@ func NewWWorkSpace[T any](w *Write, opts WWorkSpaceOptions) (*WWorkSpace[T], err
 		scaleAutoWidth:    opts.TitleScaleAutoWidth,
 		dataValidation:    opts.DataValidation,
 		validationOverRow: opts.ValidationOverRow,
-		style:             style,
 		orient:            opts.Orientation,
 		numFmt:            opts.CellNumFmt,
 		titleNumFmt:       opts.TitleNumFmt,
@@ -107,10 +101,6 @@ func (w *WWorkSpace[T]) Close() (err error) {
 
 	if err := w.enc.title.writeDataValidation(); err != nil {
 		return fmt.Errorf("write data validation: %w", err)
-	}
-
-	if err := w.enc.title.writeStyle(); err != nil {
-		return fmt.Errorf("title style: %w", err)
 	}
 
 	if err := w.enc.title.writeWidth(); err != nil {

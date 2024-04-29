@@ -1,7 +1,6 @@
 package excelstruct
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/xuri/excelize/v2"
@@ -71,15 +70,18 @@ func defaultTimeConv(v string) (time.Time, error) {
 	return et, nil
 }
 
+// OpenFileOptions is the options for open file.
 type OpenFileOptions struct {
 	FilePath string
 	Style    NameStyle
-	Opts     *excelize.Options
+	Excel    *excelize.Options
 }
 
+// WriteFileOptions is the options for write file.
 type WriteFileOptions struct {
 	FilePath  string
 	StructTag string
+	Excel     *excelize.Options
 }
 
 func (o *WriteFileOptions) initDefault() {
@@ -88,23 +90,7 @@ func (o *WriteFileOptions) initDefault() {
 	}
 }
 
-// initStyle init style from NameStyle.
-func initStyle(file *excelize.File, style NameStyle) (styleID, error) {
-	res := make(styleID, len(style))
-	for k, v := range style {
-		if v == nil {
-			return nil, fmt.Errorf("style %q is nil", k)
-		}
-
-		styleID, err := file.NewStyle(v)
-		if err != nil {
-			return nil, fmt.Errorf("create style %q: %w", k, err)
-		}
-		res[k] = styleID
-	}
-	return res, nil
-}
-
+// WWorkSpaceOptions is the options for write workspace.
 type WWorkSpaceOptions struct {
 	SheetName             string
 	TitleRowIndex         int
@@ -168,6 +154,7 @@ func (o *WWorkSpaceOptions) initDefault() {
 	}
 }
 
+// RWorkSpaceOptions is the options for read workspace.
 type RWorkSpaceOptions struct {
 	SheetName     string
 	TitleRowIndex int

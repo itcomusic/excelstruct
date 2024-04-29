@@ -8,33 +8,24 @@ import (
 
 type Read struct {
 	*excelize.File
-	style styleID
 }
 
 // OpenFile opens a xlsx file.
-func OpenFile(opts OpenFileOptions) (*Read, error) {
-	var opt []excelize.Options
-	if opts.Opts != nil {
-		opt = append(opt, *opts.Opts)
+func OpenFile(o OpenFileOptions) (*Read, error) {
+	var opts []excelize.Options
+	if o.Excel != nil {
+		opts = append(opts, *o.Excel)
 	}
 
-	file, err := excelize.OpenFile(opts.FilePath, opt...)
+	file, err := excelize.OpenFile(o.FilePath, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("excelstruct: file: %w", err)
 	}
 
-	// init style
-	style, err := initStyle(file, opts.Style)
-	if err != nil {
-		return nil, fmt.Errorf("excelstruct: init style: %w", err)
-	}
-
-	return &Read{
-		File:  file,
-		style: style,
-	}, nil
+	return &Read{File: file}, nil
 }
 
+// Close closes the file.
 func (r *Read) Close() {
 	defer r.File.Close()
 }

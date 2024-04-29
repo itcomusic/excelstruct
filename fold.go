@@ -7,7 +7,6 @@ const (
 // simpleLetterEqualFold is a specialization of bytes.EqualFold for
 // use when s is all ASCII letters (no underscores, etc) and also
 // doesn't contain 'k', 'K', 's', or 'S'.
-// See comments on foldFunc.
 func simpleLetterEqualFold(s, t []byte) bool {
 	if len(s) != len(t) {
 		return false

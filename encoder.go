@@ -707,7 +707,7 @@ func typeFields(t reflect.Type, opts typeOpts) structFields {
 // dominantField looks through the fields, all of which are known to
 // have the same name, to find the single field that dominates the
 // others using Go's embedding rules, modified by the presence of
-// EXELX tags. If there are multiple top-level fields, the boolean
+// Excel tags. If there are multiple top-level fields, the boolean
 // will be false: This condition is an error in Go and we skip all
 // the fields.
 func dominantField(fields []field) (field, bool) {

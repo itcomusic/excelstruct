@@ -25,7 +25,6 @@ type titleConfig struct {
 	scaleAutoWidth    ScaleAutoWidth
 	dataValidation    DataValidation
 	validationOverRow int
-	style             styleID
 	orient            Orientation
 	numFmt            map[excelize.CellType]int
 	titleNumFmt       map[string]int
@@ -370,34 +369,6 @@ func (t *title) writeDataValidation() error {
 
 		if err := t.file.AddDataValidation(t.config.sheetName, dv); err != nil {
 			return fmt.Errorf("title %q %q data validation: %w", n.Name, cell, err)
-		}
-	}
-	return nil
-}
-
-// writeStyle writes the style.
-func (t *title) writeStyle() error {
-	maxRow := t.maxRowData()
-
-	// no needs a style because there is no written data
-	if maxRow == t.config.rowIndex {
-		return nil
-	}
-
-	maxRow += 1
-	for _, n := range t.name {
-		style, ok := t.config.style[n.Name]
-		if !ok {
-			continue
-		}
-
-		for _, c := range n.Column {
-			from, _ := excelize.CoordinatesToCellName(c+1, t.config.rowIndex+2) // +1 for header, +1 for start values
-			to, _ := excelize.CoordinatesToCellName(c+1, maxRow)
-
-			if err := t.file.SetCellStyle(t.config.sheetName, from, to, style); err != nil {
-				return fmt.Errorf("title %q \"%s:%s\" style: %w", n.Name, from, to, err)
-			}
 		}
 	}
 	return nil

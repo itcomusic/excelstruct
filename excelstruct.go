@@ -12,5 +12,3 @@ type ValueMarshaler interface {
 type ValueUnmarshaler interface {
 	UnmarshalXLSXValue(value []string) error
 }
-
-type styleID map[string]int

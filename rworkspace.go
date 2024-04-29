@@ -7,6 +7,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+// RWorkSpace is a workspace for reading data from a file.
 type RWorkSpace[T any] struct {
 	*excelize.File
 	sheetName string
@@ -15,6 +16,7 @@ type RWorkSpace[T any] struct {
 	dec       *decodeState
 }
 
+// NewRWorkSpace creates a work space with the specified titles and struct.
 func NewRWorkSpace[T any](r *Read, opts RWorkSpaceOptions) (*RWorkSpace[T], error) {
 	opts.initDefault()
 
@@ -28,7 +30,6 @@ func NewRWorkSpace[T any](r *Read, opts RWorkSpaceOptions) (*RWorkSpace[T], erro
 		tag:      opts.StructTag,
 		rowIndex: opts.TitleRowIndex,
 		conv:     opts.TitleConv,
-		style:    r.style,
 	}, cursor)
 	if err != nil {
 		cursor.Close()

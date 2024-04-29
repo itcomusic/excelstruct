@@ -49,6 +49,7 @@ func (e *ConvertValueError) Error() string {
 	return fmt.Sprintf("excelstruct: cannot convert value %q into Go struct field %q: %v", e.Value, e.Field, e.Err)
 }
 
+// An UnmarshalError describes an error that was occurred during unmarshal.
 type UnmarshalError struct {
 	Row int
 	Err []error
@@ -58,6 +59,7 @@ func (e *UnmarshalError) saveError(err error) {
 	e.Err = append(e.Err, err)
 }
 
+// TypeError returns the all UnmarshalTypeError in UnmarshalError.
 func (e *UnmarshalError) TypeError() []*UnmarshalTypeError {
 	var res []*UnmarshalTypeError
 	for _, v := range e.Err {
@@ -68,6 +70,7 @@ func (e *UnmarshalError) TypeError() []*UnmarshalTypeError {
 	return res
 }
 
+// ConvertValueError returns the all ConvertValueError in UnmarshalError.
 func (e *UnmarshalError) ConvertValueError() []*ConvertValueError {
 	var res []*ConvertValueError
 	for _, v := range e.Err {
@@ -78,6 +81,7 @@ func (e *UnmarshalError) ConvertValueError() []*ConvertValueError {
 	return res
 }
 
+// Error returns the all error in UnmarshalError.
 func (e *UnmarshalError) Error() string {
 	causes := make([]string, 0, 2)
 	for _, v := range e.Err {
