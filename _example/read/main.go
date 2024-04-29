@@ -7,14 +7,18 @@ import (
 )
 
 type ReadExcel struct {
-	ID   int    `excel:"ID"`
-	Name string `excel:"Name"`
+	ID   int    `excel:"id"`
+	Name string `excel:"name"`
 }
 
 func main() {
-	if models, err := excelstruct.ReadFile[*ReadExcel]("/to/path.xlsx"); err != nil {
-		fmt.Println("read excel err:" + err.Error())
-	} else {
-		fmt.Printf("read excel num: %d\n", len(models))
-	}
+	f, _ := excelstruct.OpenFile(excelstruct.OpenFileOptions{FilePath: "read.xlsx"})
+	defer f.Close()
+
+	sheet, _ := excelstruct.NewRWorkSpace[ReadExcel](f, excelstruct.RWorkSpaceOptions{})
+	defer sheet.Close()
+
+	var got []ReadExcel
+	_ = sheet.All(&got)
+	fmt.Println(got)
 }
