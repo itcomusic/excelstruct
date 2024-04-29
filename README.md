@@ -18,27 +18,60 @@ go get github.com/itcomusic/excelstruct
 package main
 
 import (
-    "context" 
 	"fmt"
-	
+
 	"github.com/itcomusic/excelstruct"
 )
 
-func main() {
-    conn, _ := amqpx.Connect()
-    defer conn.Close()
+type ReadExcel struct {
+	ID   int    `excel:"id"`
+	Name string `excel:"name"`
+}
 
-    // simple publisher
-    pub := amqpx.NewPublisher[[]byte](conn, amqpx.Direct, amqpx.UseRoutingKey("routing_key"))
-    _ = pub.Publish(amqpx.NewPublishing([]byte("hello")).PersistentMode(), amqpx.SetRoutingKey("override_routing_key"))
-	
-    // simple consumer 
-    _ = conn.NewConsumer("foo", amqpx.D(func(ctx context.Context, req *amqpx.Delivery[[]byte]) amqpx.Action {
-        fmt.Printf("received message: %s\n", string(*req.Msg))
-        return amqpx.Ack
-    }))
+func main() {
+	f, _ := excelstruct.OpenFile(excelstruct.OpenFileOptions{FilePath: "read.xlsx"})
+	defer f.Close()
+
+	sheet, _ := excelstruct.NewRWorkSpace[ReadExcel](f, excelstruct.RWorkSpaceOptions{})
+	defer sheet.Close()
+
+	var got []ReadExcel
+	_ = sheet.All(&got)
+	fmt.Println(got)
 }
 ```
+
+```go
+package main
+
+import (
+	"github.com/itcomusic/excelstruct"
+)
+
+type WriteExcel struct {
+	ID   int    `excel:"id"`
+	Name string `excel:"name"`
+}
+
+func main() {
+	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
+	defer f.Close()
+
+	sheet, _ := excelstruct.NewWWorkSpace[WriteExcel](f, excelstruct.WWorkSpaceOptions{})
+	defer sheet.Close()
+
+	_ = sheet.Encode(&WriteExcel{
+		ID:   1,
+		Name: "Gopher",
+	})
+}
+```
+
+#### Write column oriented helping for sqref and data validation
+
+#### Auto converts data for encoding/decoding
+
+#### Style: write border
 
 ## License
 
