@@ -9,7 +9,7 @@ const (
 	defaultTag  = "excel"
 	ignoreField = "-"
 
-	optOmitempty = "optOmitempty"
+	optOmitempty = "omitempty"
 	optInline    = "inline"
 )
 

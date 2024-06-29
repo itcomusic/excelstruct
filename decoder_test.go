@@ -1,7 +1,10 @@
 package excelstruct
 
 import (
+	"fmt"
+	"log"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -39,6 +42,7 @@ type baseType struct {
 	Float32 float32   `excel:"float32"`
 	Float64 float64   `excel:"float64"`
 	String  string    `excel:"string"`
+	Bool    bool      `excel:"bool"`
 	Date    time.Time `excel:"date"`
 
 	PInt     *int       `excel:"pint"`
@@ -54,6 +58,7 @@ type baseType struct {
 	PFloat32 *float32   `excel:"pfloat32"`
 	PFloat64 *float64   `excel:"pfloat64"`
 	PString  *string    `excel:"pstring"`
+	PBool    *bool      `excel:"pbool"`
 	PDate    *time.Time `excel:"pdate"`
 }
 
@@ -108,6 +113,7 @@ func TestOpenFile_Type(t *testing.T) {
 			Float32: 32.0,
 			Float64: 64.0,
 			String:  "hello",
+			Bool:    true,
 			Date:    time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC),
 
 			PInt:     ptrV(1),
@@ -123,6 +129,7 @@ func TestOpenFile_Type(t *testing.T) {
 			PFloat32: ptrV(float32(32.0)),
 			PFloat64: ptrV(64.0),
 			PString:  ptrV("hello"),
+			PBool:    ptrV(true),
 			PDate:    ptrV(time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC)),
 		}}
 		assert.Equal(t, want, got)
@@ -213,6 +220,7 @@ func TestOpenFile_Type(t *testing.T) {
 				Float32: 32.0,
 				Float64: 64.0,
 				String:  "hello",
+				Bool:    true,
 				Date:    time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC),
 
 				PInt:     ptrV(1),
@@ -228,6 +236,7 @@ func TestOpenFile_Type(t *testing.T) {
 				PFloat32: ptrV(float32(32.0)),
 				PFloat64: ptrV(64.0),
 				PString:  ptrV("hello"),
+				PBool:    ptrV(true),
 				PDate:    ptrV(time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC)),
 			},
 			C: nil,
@@ -253,76 +262,187 @@ func TestOpenFile_Type(t *testing.T) {
 	})
 }
 
-func TestOpenFile_UnmarshalError(t *testing.T) {
+func TestInvalidUnmarshalError(t *testing.T) {
 	t.Parallel()
 
-	f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type_error.xlsx"})
+	f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type.xlsx"})
 	require.NoError(t, err)
 
 	sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{})
 	require.NoError(t, err)
 	defer sheet.Close()
 
-	var got []baseType
+	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
 
-	for sheet.Next() {
-		var v baseType
-		err := sheet.Decode(&v)
-		if err == nil {
-			got = append(got, v)
-			continue
-		}
-
-		got := new(UnmarshalError)
+		err := sheet.Decode(nil)
+		got := new(InvalidUnmarshalError)
 		require.ErrorAs(t, err, &got)
 
-		typeErr := got.TypeError()
-		require.Equal(t, 26, len(typeErr))
+		want := &InvalidUnmarshalError{Type: reflect.TypeOf((*baseType)(nil))}
+		assert.Equal(t, want, got)
+		log.Println(got.Error())
+	})
+}
 
-		want := UnmarshalTypeError{
-			Value: "a",
-			Type:  reflect.TypeOf(int(0)),
-			Field: "int",
-			Err:   nil,
+func TestUnmarshalError(t *testing.T) {
+	t.Parallel()
+
+	t.Run("type", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type_error.xlsx"})
+		require.NoError(t, err)
+
+		sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		var got []baseType
+		for sheet.Next() {
+			var v baseType
+			err := sheet.Decode(&v)
+			if err == nil {
+				got = append(got, v)
+				continue
+			}
+
+			got := new(UnmarshalError)
+			require.ErrorAs(t, err, &got)
+
+			typeErr := got.AsTypeError()
+			require.Equal(t, 28, len(typeErr))
+
+			want := UnmarshalTypeError{
+				Value: "a",
+				Type:  reflect.TypeOf(int(0)),
+				Field: "int",
+				Err:   nil,
+			}
+			assert.Equal(t, want.Value, typeErr[0].Value)
+			assert.Equal(t, want.Type, typeErr[0].Type)
+			assert.Equal(t, want.Field, typeErr[0].Field)
 		}
 
-		assert.Equal(t, want.Value, typeErr[0].Value)
-		assert.Equal(t, want.Type, typeErr[0].Type)
-		assert.Equal(t, want.Field, typeErr[0].Field)
-	}
+		want := []baseType{{
+			Int:     1,
+			Int8:    8,
+			Int16:   16,
+			Int32:   32,
+			Int64:   64,
+			Uint:    2,
+			Uint8:   28,
+			Uint16:  216,
+			Uint32:  232,
+			Uint64:  264,
+			Float32: 32.0,
+			Float64: 64.0,
+			String:  "hello",
+			Bool:    true,
+			Date:    time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC),
 
-	want := []baseType{{
-		Int:     1,
-		Int8:    8,
-		Int16:   16,
-		Int32:   32,
-		Int64:   64,
-		Uint:    2,
-		Uint8:   28,
-		Uint16:  216,
-		Uint32:  232,
-		Uint64:  264,
-		Float32: 32.0,
-		Float64: 64.0,
-		String:  "hello",
-		Date:    time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC),
+			PInt:     ptrV(1),
+			PInt8:    ptrV(int8(8)),
+			PInt16:   ptrV(int16(16)),
+			PInt32:   ptrV(int32(32)),
+			PInt64:   ptrV(int64(64)),
+			PUint:    ptrV(uint(2)),
+			PUint8:   ptrV(uint8(28)),
+			PUint16:  ptrV(uint16(216)),
+			PUint32:  ptrV(uint32(232)),
+			PUint64:  ptrV(uint64(264)),
+			PFloat32: ptrV(float32(32.0)),
+			PFloat64: ptrV(64.0),
+			PString:  ptrV("hello"),
+			PBool:    ptrV(true),
+			PDate:    ptrV(time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC)),
+		}}
+		assert.Equal(t, want, got)
+	})
 
-		PInt:     ptrV(1),
-		PInt8:    ptrV(int8(8)),
-		PInt16:   ptrV(int16(16)),
-		PInt32:   ptrV(int32(32)),
-		PInt64:   ptrV(int64(64)),
-		PUint:    ptrV(uint(2)),
-		PUint8:   ptrV(uint8(28)),
-		PUint16:  ptrV(uint16(216)),
-		PUint32:  ptrV(uint32(232)),
-		PUint64:  ptrV(uint64(264)),
-		PFloat32: ptrV(float32(32.0)),
-		PFloat64: ptrV(64.0),
-		PString:  ptrV("hello"),
-		PDate:    ptrV(time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC)),
-	}}
-	assert.Equal(t, want, got)
+	t.Run("convert", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type_error.xlsx"})
+		require.NoError(t, err)
+
+		sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{
+			StringConv: func(_ string, v string) (string, error) {
+				if len(v) <= 2 {
+					return "", fmt.Errorf("string error")
+				}
+				return v, nil
+			},
+			BoolConv: func(_ string, v string) (bool, error) {
+				return strconv.ParseBool(v)
+			},
+			TimeConv: func(v string) (time.Time, error) {
+				return defaultTimeConv(v)
+			},
+		})
+
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		var got []baseType
+		for sheet.Next() {
+			var v baseType
+			err := sheet.Decode(&v)
+			if err == nil {
+				got = append(got, v)
+				continue
+			}
+
+			got := new(UnmarshalError)
+			require.ErrorAs(t, err, &got)
+
+			convertErr := got.AsConvertValueError()
+			require.Equal(t, 4, len(convertErr))
+
+			want := ConvertValueError{
+				Value: "m",
+				Field: "string",
+				Err:   nil,
+			}
+			assert.Equal(t, want.Value, convertErr[0].Value)
+			assert.Equal(t, want.Field, convertErr[0].Field)
+		}
+
+		want := []baseType{{
+			Int:     1,
+			Int8:    8,
+			Int16:   16,
+			Int32:   32,
+			Int64:   64,
+			Uint:    2,
+			Uint8:   28,
+			Uint16:  216,
+			Uint32:  232,
+			Uint64:  264,
+			Float32: 32.0,
+			Float64: 64.0,
+			String:  "hello",
+			Bool:    true,
+			Date:    time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC),
+
+			PInt:     ptrV(1),
+			PInt8:    ptrV(int8(8)),
+			PInt16:   ptrV(int16(16)),
+			PInt32:   ptrV(int32(32)),
+			PInt64:   ptrV(int64(64)),
+			PUint:    ptrV(uint(2)),
+			PUint8:   ptrV(uint8(28)),
+			PUint16:  ptrV(uint16(216)),
+			PUint32:  ptrV(uint32(232)),
+			PUint64:  ptrV(uint64(264)),
+			PFloat32: ptrV(float32(32.0)),
+			PFloat64: ptrV(64.0),
+			PString:  ptrV("hello"),
+			PBool:    ptrV(true),
+			PDate:    ptrV(time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC)),
+		}}
+		assert.Equal(t, want, got)
+	})
 }
 
 func ptrV[T any](v T) *T {

@@ -42,6 +42,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			Float32: 32.0,
 			Float64: 64.0,
 			String:  "hello",
+			Bool:    true,
 			Date:    time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC),
 
 			PInt:     ptrV(1),
@@ -57,6 +58,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			PFloat32: ptrV(float32(32.0)),
 			PFloat64: ptrV(64.0),
 			PString:  ptrV("hello"),
+			PBool:    ptrV(true),
 			PDate:    ptrV(time.Date(2023, 12, 7, 0, 0, 0, 0, time.UTC)),
 		}))
 
@@ -76,6 +78,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			{"float32", "32"},
 			{"float64", "64"},
 			{"string", "hello"},
+			{"bool", "TRUE"},
 			{"date", "12/7/23 00:00"},
 			{"pint", "1"},
 			{"pint8", "8"},
@@ -90,6 +93,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			{"pfloat32", "32"},
 			{"pfloat64", "64"},
 			{"pstring", "hello"},
+			{"pbool", "TRUE"},
 			{"pdate", "12/7/23 00:00"},
 		}, got)
 	})
@@ -241,6 +245,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			{"float32", "0"},
 			{"float64", "0"},
 			{"string", ""},
+			{"bool", "FALSE"},
 			{"date", "0001-01-01T00:00:00Z"},
 			{"pint"},
 			{"pint8"},
@@ -255,6 +260,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			{"pfloat32"},
 			{"pfloat64"},
 			{"pstring"},
+			{"pbool"},
 			{"pdate"},
 		}, got)
 	})

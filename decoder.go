@@ -59,23 +59,23 @@ func (e *UnmarshalError) saveError(err error) {
 	e.Err = append(e.Err, err)
 }
 
-// TypeError returns the all UnmarshalTypeError in UnmarshalError.
-func (e *UnmarshalError) TypeError() []*UnmarshalTypeError {
-	var res []*UnmarshalTypeError
+// AsTypeError returns the all UnmarshalTypeError in UnmarshalError.
+func (e *UnmarshalError) AsTypeError() []UnmarshalTypeError {
+	var res []UnmarshalTypeError
 	for _, v := range e.Err {
 		if err := new(UnmarshalTypeError); errors.As(v, &err) {
-			res = append(res, err)
+			res = append(res, *err)
 		}
 	}
 	return res
 }
 
-// ConvertValueError returns the all ConvertValueError in UnmarshalError.
-func (e *UnmarshalError) ConvertValueError() []*ConvertValueError {
-	var res []*ConvertValueError
+// AsConvertValueError returns the all ConvertValueError in UnmarshalError.
+func (e *UnmarshalError) AsConvertValueError() []ConvertValueError {
+	var res []ConvertValueError
 	for _, v := range e.Err {
 		if err := new(ConvertValueError); errors.As(v, &err) {
-			res = append(res, err)
+			res = append(res, *err)
 		}
 	}
 	return res
@@ -131,7 +131,7 @@ func (d *decodeState) value(item []string, v reflect.Value) error {
 		return nil
 	}
 
-	u, pv := indirect(v, false)
+	u, pv := indirect(v)
 	if u != nil {
 		return u.UnmarshalXLSXValue(item)
 	}
@@ -352,8 +352,7 @@ func (d *decodeState) object(data []string, v reflect.Value) error {
 
 // indirect walks down v allocating pointers as needed, until it gets to a non-pointer.
 // If it encounters an Unmarshaler, indirect stops and returns that.
-// If decodingNull is true, indirect stops at the first settable pointer, so it can be set to nil.
-func indirect(v reflect.Value, decodingNull bool) (ValueUnmarshaler, reflect.Value) {
+func indirect(v reflect.Value) (ValueUnmarshaler, reflect.Value) {
 	// Issue #24153 indicates that it is generally not a guaranteed property
 	// that you may round-trip a reflect.Value by calling Value.Addr().Elem()
 	// and expect the value to still be settable for values derived from
@@ -380,7 +379,7 @@ func indirect(v reflect.Value, decodingNull bool) (ValueUnmarshaler, reflect.Val
 		// Load value from interface, but only if the result will be usefully addressable.
 		if v.Kind() == reflect.Interface && !v.IsNil() {
 			e := v.Elem()
-			if e.Kind() == reflect.Pointer && !e.IsNil() && (!decodingNull || e.Elem().Kind() == reflect.Pointer) {
+			if e.Kind() == reflect.Pointer && !e.IsNil() {
 				haveAddr = false
 				v = e
 				continue
@@ -388,10 +387,6 @@ func indirect(v reflect.Value, decodingNull bool) (ValueUnmarshaler, reflect.Val
 		}
 
 		if v.Kind() != reflect.Pointer {
-			break
-		}
-
-		if decodingNull && v.CanSet() {
 			break
 		}
 
