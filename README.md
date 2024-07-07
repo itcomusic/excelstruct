@@ -8,11 +8,11 @@
 Built on top of the powerful [excelize](https://github.com/qax-os/excelize) library, it offers a solution for dealing with excel data in a structured and type-safe manner.
 
 ## Features
-- **Type Safety**: Work directly with Go structs, leveraging Go's type system.
-- **Custom Type Support**: Easily handle custom types with marshaler and unmarshaler interfaces.
-- **Slice and Array Support**: Encode and decode slices and arrays seamlessly.
-- **Flexible Type Conversion**: Built-in type conversion options eliminate the need for custom types in many cases.
-- **Style Support**: Apply Excel border styles and auto alignment.
+- **Type Safety**: Work directly with Go structs, leveraging Go's type system
+- **Custom Type Support**: Easily handle custom types with marshaler and unmarshaler interfaces
+- **Slice and Array Support**: Encode and decode slices and arrays seamlessly
+- **Flexible Type Conversion**: Built-in type conversion options eliminate the need for custom types in many cases
+- **Style Support**: Apply Excel border styles and auto alignment
 
 ## Installation
 
