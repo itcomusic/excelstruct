@@ -1,6 +1,7 @@
 package excelstruct
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -578,7 +579,7 @@ func TestWriteFile_Style(t *testing.T) {
 	t.Parallel()
 
 	type v struct {
-		V int `excelstruct:"v"`
+		V int `excel:"v"`
 	}
 
 	f, err := WriteFile(WriteFileOptions{})
@@ -622,4 +623,57 @@ func TestWriteFile_Width(t *testing.T) {
 
 	want := DefaultScaleAutoWidth(len("9"))
 	assert.Equal(t, want, got)
+}
+
+func TestMarshaler_Panic(t *testing.T) {
+	t.Parallel()
+
+	t.Run("recover", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type v struct {
+			V string `excel:"v"`
+		}
+
+		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+			StringConv: func(title string, v string) (string, error) {
+				return "", fmt.Errorf("msg")
+			},
+		})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		want := "msg"
+		got := sheet.Encode(&v{V: ""})
+		assert.Equal(t, want, got.Error())
+	})
+
+	t.Run("not recover", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type v struct {
+			V string `excel:"v"`
+		}
+
+		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+			StringConv: func(title string, v string) (string, error) {
+				panic("msg")
+				return "", nil
+			},
+		})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		require.PanicsWithValue(t, "msg", func() {
+			_ = sheet.Encode(&v{V: ""})
+		})
+	})
 }

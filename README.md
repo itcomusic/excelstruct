@@ -4,7 +4,15 @@
 [![pkg-img]][pkg-url]
 [![coverage-img]][coverage-url]
 
-This is a Go excel package wraps [excelize](https://github.com/qax-os/excelize) with encoding/decoding struct.
+**excelstruct** is a comprehensive Go package that simplifies working with Excel files by allowing you to easily encode and decode structs.
+Built on top of the powerful [excelize](https://github.com/qax-os/excelize) library, it offers a solution for dealing with excel data in a structured and type-safe manner.
+
+## Features
+- **Type Safety**: Work directly with Go structs, leveraging Go's type system.
+- **Custom Type Support**: Easily handle custom types with marshaler and unmarshaler interfaces.
+- **Slice and Array Support**: Encode and decode slices and arrays seamlessly.
+- **Flexible Type Conversion**: Built-in type conversion options eliminate the need for custom types in many cases.
+- **Style Support**: Apply Excel border styles and auto alignment.
 
 ## Installation
 
@@ -15,7 +23,6 @@ go get github.com/itcomusic/excelstruct
 ```
 
 ## Usage
-
 ```go
 package main
 
@@ -26,8 +33,19 @@ import (
 )
 
 type ReadExcel struct {
-	ID   int    `excel:"id"`
-	Name string `excel:"name"`
+	Int         int              `excel:"int"`
+	String      string           `excel:"string"`
+	Slice       []string         `excel:"slice"`
+	Unmarshaler valueUnmarshaler `excel:"unmarshaler"`
+}
+
+type valueUnmarshaler struct {
+	value string
+}
+
+func (v *valueUnmarshaler) UnmarshalXLSXValue(value string) error {
+	v.value = value
+	return nil
 }
 
 func main() {
@@ -51,8 +69,18 @@ import (
 )
 
 type WriteExcel struct {
-	ID   int    `excel:"id"`
-	Name string `excel:"name"`
+	Int       int             `excel:"int"`
+	String    string          `excel:"string"`
+	Slice     []string        `excel:"slice"`
+	Marshaler *valueMarshaler `excel:"marshaler"`
+}
+
+type valueMarshaler struct {
+	value string
+}
+
+func (v *valueMarshaler) MarshalXLSXValue() ([]string, error) {
+	return []string{v.value}, nil
 }
 
 func main() {
@@ -63,8 +91,10 @@ func main() {
 	defer sheet.Close()
 
 	_ = sheet.Encode(&WriteExcel{
-		ID:   1,
-		Name: "Gopher",
+		Int:       1,
+		String:    "string",
+		Slice:     []string{"value1", "value2"},
+		Marshaler: &valueMarshaler{value: "marshaler"},
 	})
 }
 ```
@@ -129,9 +159,6 @@ func dataValidation(sheet *excelstruct.WWorkSpace[map[string][]string]) func(tit
 	}
 }
 ```
-#### Auto converts data for encoding/decoding
-
-#### Style: write border
 
 ## License
 

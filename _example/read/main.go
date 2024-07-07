@@ -7,8 +7,19 @@ import (
 )
 
 type ReadExcel struct {
-	ID   int    `excel:"id"`
-	Name string `excel:"name"`
+	Int         int              `excel:"int"`
+	String      string           `excel:"string"`
+	Slice       []string         `excel:"slice"`
+	Unmarshaler valueUnmarshaler `excel:"unmarshaler"`
+}
+
+type valueUnmarshaler struct {
+	value string
+}
+
+func (v *valueUnmarshaler) UnmarshalXLSXValue(value string) error {
+	v.value = value
+	return nil
 }
 
 func main() {

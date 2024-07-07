@@ -5,8 +5,18 @@ import (
 )
 
 type WriteExcel struct {
-	ID   int    `excel:"id"`
-	Name string `excel:"name"`
+	Int       int             `excel:"int"`
+	String    string          `excel:"string"`
+	Slice     []string        `excel:"slice"`
+	Marshaler *valueMarshaler `excel:"marshaler"`
+}
+
+type valueMarshaler struct {
+	value string
+}
+
+func (v *valueMarshaler) MarshalXLSXValue() ([]string, error) {
+	return []string{v.value}, nil
 }
 
 func main() {
@@ -17,7 +27,9 @@ func main() {
 	defer sheet.Close()
 
 	_ = sheet.Encode(&WriteExcel{
-		ID:   1,
-		Name: "Gopher",
+		Int:       1,
+		String:    "string",
+		Slice:     []string{"value1", "value2"},
+		Marshaler: &valueMarshaler{value: "marshaler"},
 	})
 }
