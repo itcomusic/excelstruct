@@ -101,6 +101,11 @@ func (e *encodeState) marshal(v any) (err error) {
 
 func isEmptyValue(v reflect.Value) bool {
 	switch v.Kind() {
+	case reflect.Struct:
+		t := v.Type()
+		if t == timeType {
+			return v.Interface().(time.Time).IsZero()
+		}
 	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
 		return v.Len() == 0
 	case reflect.Bool:

@@ -165,6 +165,7 @@ func (w *WWorkSpace[T]) Close() (err error) {
 }
 
 func (w *WWorkSpace[T]) applyCellStyle() error {
+
 	// aligns by max row data
 	nextRow := w.enc.title.config.rowIndex
 	for _, n := range w.enc.title.name {

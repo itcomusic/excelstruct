@@ -69,6 +69,7 @@ type unmarshalerType struct {
 
 type sliceType struct {
 	Strings  []string  `excel:"strings"`
+	Bytes    []byte    `excel:"bytes"`
 	PStrings []*string `excel:"pstrings"`
 }
 

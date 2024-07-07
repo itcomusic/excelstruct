@@ -111,6 +111,7 @@ func TestWriteFile_Encode(t *testing.T) {
 
 		assert.NoError(t, sheet.Encode(&sliceType{
 			Strings:  []string{"hello", "world", ""},
+			Bytes:    []byte("hello"),
 			PStrings: []*string{ptrV("hello"), ptrV("world"), nil},
 		}))
 
@@ -120,6 +121,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			{"strings", "hello"},
 			{"strings", "world"},
 			{"strings", ""},
+			{"bytes", "hello"},
 			{"pstrings", "hello"},
 			{"pstrings", "world"},
 			{"pstrings"},
@@ -142,6 +144,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, [][]string{
 			{"strings"},
+			{"bytes"},
 			{"pstrings"},
 		}, got)
 	})
@@ -264,10 +267,128 @@ func TestWriteFile_Encode(t *testing.T) {
 			{"pdate"},
 		}, got)
 	})
+
+	t.Run("omitempty", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type v struct {
+			Int       int            `excel:"int,omitempty"`
+			Int8      int8           `excel:"int8,omitempty"`
+			Int16     int16          `excel:"int16,omitempty"`
+			Int32     int32          `excel:"int32,omitempty"`
+			Int64     int64          `excel:"int64,omitempty"`
+			Uint      uint           `excel:"uint,omitempty"`
+			Uint8     uint8          `excel:"uint8,omitempty"`
+			Uint16    uint16         `excel:"uint16,omitempty"`
+			Uint32    uint32         `excel:"uint32,omitempty"`
+			Uint64    uint64         `excel:"uint64,omitempty"`
+			Float32   float32        `excel:"float32,omitempty"`
+			Float64   float64        `excel:"float64,omitempty"`
+			String    string         `excel:"string,omitempty"`
+			Slice     []string       `excel:"slice,omitempty"`
+			Array     [0]string      `excel:"array,omitempty"`
+			Map       map[string]int `excel:"map,omitempty"`
+			Bool      bool           `excel:"bool,omitempty"`
+			Date      time.Time      `excel:"date,omitempty"`
+			PInt      *int           `excel:"pint,omitempty"`
+			PInt8     *int8          `excel:"pint8,omitempty"`
+			PInt16    *int16         `excel:"pint16,omitempty"`
+			PInt32    *int32         `excel:"pint32,omitempty"`
+			PInt64    *int64         `excel:"pint64,omitempty"`
+			PUint     *uint          `excel:"puint,omitempty"`
+			PUint8    *uint8         `excel:"puint8,omitempty"`
+			PUint16   *uint16        `excel:"puint16,omitempty"`
+			PUint32   *uint32        `excel:"puint32,omitempty"`
+			PUint64   *uint64        `excel:"puint64,omitempty"`
+			PFloat32  *float32       `excel:"pfloat32,omitempty"`
+			PFloat64  *float64       `excel:"pfloat64,omitempty"`
+			PString   *string        `excel:"pstring,omitempty"`
+			PBool     *bool          `excel:"pbool,omitempty"`
+			PDate     *time.Time     `excel:"pdate,omitempty"`
+			Interface ValueMarshaler `excel:"marshaller,omitempty"`
+		}
+
+		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+		assert.NoError(t, sheet.Encode(&v{}))
+
+		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
+		require.NoError(t, err)
+		assert.Equal(t, [][]string{
+			{"int"},
+			{"int8"},
+			{"int16"},
+			{"int32"},
+			{"int64"},
+			{"uint"},
+			{"uint8"},
+			{"uint16"},
+			{"uint32"},
+			{"uint64"},
+			{"float32"},
+			{"float64"},
+			{"string"},
+			{"slice"},
+			{"array"},
+			{"map"},
+			{"bool"},
+			{"date"},
+			{"pint"},
+			{"pint8"},
+			{"pint16"},
+			{"pint32"},
+			{"pint64"},
+			{"puint"},
+			{"puint8"},
+			{"puint16"},
+			{"puint32"},
+			{"puint64"},
+			{"pfloat32"},
+			{"pfloat64"},
+			{"pstring"},
+			{"pbool"},
+			{"pdate"},
+			{"marshaller"},
+		}, got)
+	})
 }
 
 func TestWriteFile_ValueConv(t *testing.T) {
 	t.Parallel()
+
+	t.Run("string", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type v struct {
+			V string `excel:"v"`
+		}
+
+		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+			StringConv: func(title string, v string) (string, error) {
+				return v + " world", nil
+			},
+		})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		require.NoError(t, sheet.Encode(&v{V: "hello"}))
+		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
+		require.NoError(t, err)
+
+		want := [][]string{
+			{"v", "hello world"},
+		}
+		assert.Equal(t, want, got)
+	})
 
 	t.Run("bool", func(t *testing.T) {
 		t.Parallel()
