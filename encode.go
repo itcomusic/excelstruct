@@ -57,8 +57,8 @@ func openExcelFile(path string, o *excelize.Options) (*excelize.File, error) {
 	return excelize.OpenFile(path, opts...)
 }
 
-// WWorkSpace is a workspace for writing data to a file.
-type WWorkSpace[T any] struct {
+// Encoder is a writing data to a file.
+type Encoder[T any] struct {
 	*excelize.File
 	enc        *encodeState
 	cellBorder []excelize.Border
@@ -66,8 +66,8 @@ type WWorkSpace[T any] struct {
 	err        error
 }
 
-// NewWWorkSpace creates a work space with the specified titles and struct.
-func NewWWorkSpace[T any](w *Write, opts WWorkSpaceOptions) (*WWorkSpace[T], error) {
+// NewEncoder creates encoder the specified titles and struct.
+func NewEncoder[T any](w *Write, opts EncoderOptions) (*Encoder[T], error) {
 	opts.initDefault()
 
 	if _, err := w.File.NewSheet(opts.SheetName); err != nil {
@@ -97,7 +97,7 @@ func NewWWorkSpace[T any](w *Write, opts WWorkSpaceOptions) (*WWorkSpace[T], err
 		return nil, fmt.Errorf("excelstruct: write title: %w", err)
 	}
 
-	return &WWorkSpace[T]{
+	return &Encoder[T]{
 		File: w.File,
 		enc: &encodeState{
 			encOpts: encOpts{
@@ -118,14 +118,14 @@ func NewWWorkSpace[T any](w *Write, opts WWorkSpaceOptions) (*WWorkSpace[T], err
 }
 
 // Encode writes v to file.
-func (w *WWorkSpace[T]) Encode(v *T) error {
-	return w.enc.marshal(v)
+func (e *Encoder[T]) Encode(v *T) error {
+	return e.enc.marshal(v)
 }
 
 // All writes all values to file.
-func (w *WWorkSpace[T]) All(v []T) error {
+func (e *Encoder[T]) All(v []T) error {
 	for i := range v {
-		if err := w.Encode(&v[i]); err != nil {
+		if err := e.Encode(&v[i]); err != nil {
 			return fmt.Errorf("excelstruct: marshal: %w", err)
 		}
 	}
@@ -133,42 +133,42 @@ func (w *WWorkSpace[T]) All(v []T) error {
 }
 
 // SqrefRow returns the range of the row by title.
-func (w *WWorkSpace[T]) SqrefRow(title string) (string, error) {
-	return w.enc.title.sqrefByRow(title)
+func (e *Encoder[T]) SqrefRow(title string) (string, error) {
+	return e.enc.title.sqrefByRow(title)
 }
 
 // Close applies the style and data validation.
-func (w *WWorkSpace[T]) Close() (err error) {
-	if w.close {
-		return w.err
+func (e *Encoder[T]) Close() (err error) {
+	if e.close {
+		return e.err
 	}
 
 	defer func() {
-		w.close = true
+		e.close = true
 		if err != nil {
-			w.err = err
+			e.err = err
 		}
 	}()
 
-	if err := w.enc.title.writeDataValidation(); err != nil {
+	if err := e.enc.title.writeDataValidation(); err != nil {
 		return fmt.Errorf("write data validation: %w", err)
 	}
 
-	if err := w.enc.title.writeWidth(); err != nil {
+	if err := e.enc.title.writeWidth(); err != nil {
 		return fmt.Errorf("title width: %w", err)
 	}
 
-	if err := w.applyCellStyle(); err != nil {
+	if err := e.applyCellStyle(); err != nil {
 		return fmt.Errorf("global style: %w", err)
 	}
 	return nil
 }
 
-func (w *WWorkSpace[T]) applyCellStyle() error {
+func (e *Encoder[T]) applyCellStyle() error {
 
 	// aligns by max row data
-	nextRow := w.enc.title.config.rowIndex
-	for _, n := range w.enc.title.name {
+	nextRow := e.enc.title.config.rowIndex
+	for _, n := range e.enc.title.name {
 		for _, v := range n.RowData {
 			if v > nextRow {
 				nextRow = v
@@ -176,10 +176,10 @@ func (w *WWorkSpace[T]) applyCellStyle() error {
 		}
 	}
 
-	for _, t := range w.enc.title.name {
-		numFmtID := w.enc.title.numFmt[t.Name]
-		styleID, err := w.File.NewStyle(&excelize.Style{
-			Border: w.cellBorder,
+	for _, t := range e.enc.title.name {
+		numFmtID := e.enc.title.numFmt[t.Name]
+		styleID, err := e.File.NewStyle(&excelize.Style{
+			Border: e.cellBorder,
 			NumFmt: numFmtID,
 		})
 		if err != nil {
@@ -194,7 +194,7 @@ func (w *WWorkSpace[T]) applyCellStyle() error {
 			}
 		}
 
-		h, err := excelize.CoordinatesToCellName(t.Column[0], w.enc.title.config.rowIndex)
+		h, err := excelize.CoordinatesToCellName(t.Column[0], e.enc.title.config.rowIndex)
 		if err != nil {
 			return fmt.Errorf("coordinates to cell name: %w", err)
 		}
@@ -204,7 +204,7 @@ func (w *WWorkSpace[T]) applyCellStyle() error {
 			return fmt.Errorf("coordinates to cell name: %w", err)
 		}
 
-		if err := w.SetCellStyle(w.enc.title.config.sheetName, h, v, styleID); err != nil {
+		if err := e.SetCellStyle(e.enc.title.config.sheetName, h, v, styleID); err != nil {
 			return fmt.Errorf("set cell style: %w", err)
 		}
 	}

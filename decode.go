@@ -31,8 +31,8 @@ func (r *Read) Close() {
 	defer r.File.Close()
 }
 
-// RWorkSpace is a workspace for reading data from a file.
-type RWorkSpace[T any] struct {
+// Decoder is a workspace for reading data from a file.
+type Decoder[T any] struct {
 	*excelize.File
 	sheetName string
 	cursor    *excelize.Rows
@@ -40,8 +40,8 @@ type RWorkSpace[T any] struct {
 	dec       *decodeState
 }
 
-// NewRWorkSpace creates a work space with the specified titles and struct.
-func NewRWorkSpace[T any](r *Read, opts RWorkSpaceOptions) (*RWorkSpace[T], error) {
+// NewDecoder creates a decoder with the specified titles and struct.
+func NewDecoder[T any](r *Read, opts DecoderOptions) (*Decoder[T], error) {
 	opts.initDefault()
 
 	// read title
@@ -50,7 +50,7 @@ func NewRWorkSpace[T any](r *Read, opts RWorkSpaceOptions) (*RWorkSpace[T], erro
 		return nil, fmt.Errorf("excel: rows: %w", err)
 	}
 
-	title, err := newTitleFromExcel(titleConfig{
+	title, err := newTitleFromFile(titleConfig{
 		tag:      opts.StructTag,
 		rowIndex: opts.TitleRowIndex,
 		conv:     opts.TitleConv,
@@ -71,22 +71,22 @@ func NewRWorkSpace[T any](r *Read, opts RWorkSpaceOptions) (*RWorkSpace[T], erro
 		row:   opts.TitleRowIndex + 1, // position the first row of data
 	}
 
-	return &RWorkSpace[T]{
+	return &Decoder[T]{
 		File:      r.File,
 		sheetName: opts.SheetName,
 		cursor:    cursor,
-		rtype:     reflect.TypeOf(new(T)).Elem(),
+		rtype:     reflect.TypeFor[T](),
 		dec:       decodeState,
 	}, nil
 }
 
 // Next moves the cursor to the next row.
-func (c *RWorkSpace[T]) Next() bool {
+func (c *Decoder[T]) Next() bool {
 	return c.cursor.Next()
 }
 
 // Decode decodes the row to the struct.
-func (c *RWorkSpace[T]) Decode(res *T) error {
+func (c *Decoder[T]) Decode(res *T) error {
 	column, err := c.cursor.Columns()
 	if err != nil {
 		return fmt.Errorf("excelstruct: get columns: %w", err)
@@ -98,8 +98,31 @@ func (c *RWorkSpace[T]) Decode(res *T) error {
 	return nil
 }
 
+// Count returns the number of rows.
+func (c *Decoder[T]) Count() int {
+	cursor, err := c.File.Rows(c.sheetName)
+	if err != nil {
+		return 0
+	}
+	defer cursor.Close()
+
+	i := 1
+	// <= because Next() have to put the pointer to the index row
+	for ; i <= c.dec.title.config.rowIndex; i++ {
+		if !cursor.Next() {
+			return 0
+		}
+	}
+
+	count := 0
+	for cursor.Next() {
+		count++
+	}
+	return count
+}
+
 // All decodes all rows to the struct.
-func (c *RWorkSpace[T]) All(res *[]T) error {
+func (c *Decoder[T]) All(res *[]T) error {
 	for c.cursor.Next() {
 		v := reflect.New(c.rtype).Elem().Interface().(T)
 		if err := c.Decode(&v); err != nil {
@@ -111,6 +134,6 @@ func (c *RWorkSpace[T]) All(res *[]T) error {
 }
 
 // Close closes the cursor.
-func (c *RWorkSpace[T]) Close() {
+func (c *Decoder[T]) Close() {
 	defer c.cursor.Close()
 }

@@ -2,7 +2,6 @@ package excelstruct
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strconv"
 	"testing"
@@ -83,7 +82,7 @@ type inlineType struct {
 	C *struct{} `excel:",inline"`
 }
 
-func TestOpenFile_Type(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	t.Run("simple", func(t *testing.T) {
@@ -93,7 +92,7 @@ func TestOpenFile_Type(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[baseType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -143,7 +142,7 @@ func TestOpenFile_Type(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewRWorkSpace[sliceType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[sliceType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -162,7 +161,7 @@ func TestOpenFile_Type(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewRWorkSpace[arrayType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[arrayType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -181,7 +180,7 @@ func TestOpenFile_Type(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewRWorkSpace[unmarshalerType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[unmarshalerType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -200,7 +199,7 @@ func TestOpenFile_Type(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewRWorkSpace[inlineType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[inlineType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -251,7 +250,7 @@ func TestOpenFile_Type(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[baseType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -269,7 +268,7 @@ func TestInvalidUnmarshalError(t *testing.T) {
 	f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type.xlsx"})
 	require.NoError(t, err)
 
-	sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{})
+	sheet, err := NewDecoder[baseType](f, DecoderOptions{})
 	require.NoError(t, err)
 	defer sheet.Close()
 
@@ -282,7 +281,6 @@ func TestInvalidUnmarshalError(t *testing.T) {
 
 		want := &InvalidUnmarshalError{Type: reflect.TypeOf((*baseType)(nil))}
 		assert.Equal(t, want, got)
-		log.Println(got.Error())
 	})
 }
 
@@ -295,7 +293,7 @@ func TestUnmarshalError(t *testing.T) {
 		f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type_error.xlsx"})
 		require.NoError(t, err)
 
-		sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{})
+		sheet, err := NewDecoder[baseType](f, DecoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -367,7 +365,7 @@ func TestUnmarshalError(t *testing.T) {
 		f, err := OpenFile(OpenFileOptions{FilePath: "testdata/type_error.xlsx"})
 		require.NoError(t, err)
 
-		sheet, err := NewRWorkSpace[baseType](f, RWorkSpaceOptions{
+		sheet, err := NewDecoder[baseType](f, DecoderOptions{
 			StringConv: func(_ string, v string) (string, error) {
 				if len(v) <= 2 {
 					return "", fmt.Errorf("string error")
@@ -444,6 +442,41 @@ func TestUnmarshalError(t *testing.T) {
 		}}
 		assert.Equal(t, want, got)
 	})
+}
+
+func TestDecoder_Count(t *testing.T) {
+	t.Parallel()
+
+	t.Run("offset=0", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := OpenFile(OpenFileOptions{FilePath: "testdata/rows3.xlsx"})
+		require.NoError(t, err)
+		defer f.Close()
+
+		sheet, err := NewDecoder[baseType](f, DecoderOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		want := 3
+		assert.Equal(t, want, sheet.Count())
+	})
+
+	t.Run("offset=1", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := OpenFile(OpenFileOptions{FilePath: "testdata/offset1rows3.xlsx"})
+		require.NoError(t, err)
+		defer f.Close()
+
+		sheet, err := NewDecoder[baseType](f, DecoderOptions{TitleRowIndex: 2})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		want := 3
+		assert.Equal(t, want, sheet.Count())
+	})
+
 }
 
 func ptrV[T any](v T) *T {

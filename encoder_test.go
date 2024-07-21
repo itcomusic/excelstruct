@@ -2,6 +2,7 @@ package excelstruct
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -15,7 +16,7 @@ type marshalerType struct {
 	PString *stringType `excel:"pstring"`
 }
 
-func TestWriteFile_Encode(t *testing.T) {
+func TestMarshal(t *testing.T) {
 	t.Parallel()
 
 	t.Run("simple", func(t *testing.T) {
@@ -25,7 +26,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[baseType](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[baseType](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -106,7 +107,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[sliceType](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[sliceType](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -136,7 +137,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[sliceType](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[sliceType](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -157,7 +158,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[arrayType](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[arrayType](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -185,7 +186,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[map[string]any](f, WWorkSpaceOptions{TitleName: []string{"string"}})
+		sheet, err := NewEncoder[map[string]any](f, EncoderOptions{TitleName: []string{"string"}})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -204,7 +205,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[marshalerType](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[marshalerType](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -228,7 +229,7 @@ func TestWriteFile_Encode(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[baseType](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[baseType](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -313,7 +314,7 @@ func TestWriteFile_Encode(t *testing.T) {
 			Interface ValueMarshaler `excel:"marshaller,omitempty"`
 		}
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{})
+		sheet, err := NewEncoder[v](f, EncoderOptions{})
 		require.NoError(t, err)
 		defer sheet.Close()
 		assert.NoError(t, sheet.Encode(&v{}))
@@ -359,7 +360,7 @@ func TestWriteFile_Encode(t *testing.T) {
 	})
 }
 
-func TestWriteFile_ValueConv(t *testing.T) {
+func TestMarshal_ValueConv(t *testing.T) {
 	t.Parallel()
 
 	t.Run("string", func(t *testing.T) {
@@ -373,7 +374,7 @@ func TestWriteFile_ValueConv(t *testing.T) {
 			V string `excel:"v"`
 		}
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+		sheet, err := NewEncoder[v](f, EncoderOptions{
 			StringConv: func(title string, v string) (string, error) {
 				return v + " world", nil
 			},
@@ -403,7 +404,7 @@ func TestWriteFile_ValueConv(t *testing.T) {
 			B bool   `excel:"b"`
 		}
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+		sheet, err := NewEncoder[v](f, EncoderOptions{
 			BoolConv: func(title string, v bool) (string, error) {
 				if v {
 					return "yes", nil
@@ -426,7 +427,7 @@ func TestWriteFile_ValueConv(t *testing.T) {
 	})
 }
 
-func TestWriteFile_Orientation(t *testing.T) {
+func TestEncoder_Orientation(t *testing.T) {
 	t.Parallel()
 
 	type v struct {
@@ -440,7 +441,7 @@ func TestWriteFile_Orientation(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{Orientation: OrientationRow})
+		sheet, err := NewEncoder[v](f, EncoderOptions{Orientation: OrientationRow})
 		require.NoError(t, err)
 
 		require.NoError(t, sheet.Encode(&v{V: []int{1, 2, 3}}))
@@ -462,7 +463,7 @@ func TestWriteFile_Orientation(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{Orientation: OrientationColumn})
+		sheet, err := NewEncoder[v](f, EncoderOptions{Orientation: OrientationColumn})
 		require.NoError(t, err)
 		defer sheet.Close()
 
@@ -478,7 +479,7 @@ func TestWriteFile_Orientation(t *testing.T) {
 
 }
 
-func TestWriteFile_DataValidation(t *testing.T) {
+func TestEncoder_DataValidation(t *testing.T) {
 	t.Parallel()
 
 	type v struct {
@@ -497,7 +498,7 @@ func TestWriteFile_DataValidation(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{DataValidation: func(title string) (*excelize.DataValidation, error) {
+		sheet, err := NewEncoder[v](f, EncoderOptions{DataValidation: func(title string) (*excelize.DataValidation, error) {
 			dv := *dv
 			return &dv, nil
 		}})
@@ -525,7 +526,7 @@ func TestWriteFile_DataValidation(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+		sheet, err := NewEncoder[v](f, EncoderOptions{
 			DataValidation: func(title string) (*excelize.DataValidation, error) {
 				dv := *dv
 				return &dv, nil
@@ -556,7 +557,7 @@ func TestWriteFile_DataValidation(t *testing.T) {
 		require.NoError(t, err)
 		defer f.Close()
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+		sheet, err := NewEncoder[v](f, EncoderOptions{
 			DataValidation: func(title string) (*excelize.DataValidation, error) {
 				dv := *dv
 				return &dv, nil
@@ -575,7 +576,7 @@ func TestWriteFile_DataValidation(t *testing.T) {
 	})
 }
 
-func TestWriteFile_Style(t *testing.T) {
+func TestEncoder_Style(t *testing.T) {
 	t.Parallel()
 
 	type v struct {
@@ -586,7 +587,7 @@ func TestWriteFile_Style(t *testing.T) {
 	require.NoError(t, err)
 	defer f.Close()
 
-	sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{Style: NameStyle{
+	sheet, err := NewEncoder[v](f, EncoderOptions{Style: NameStyle{
 		"v": &excelize.Style{Border: []excelize.Border{}},
 	}})
 	require.NoError(t, err)
@@ -595,7 +596,7 @@ func TestWriteFile_Style(t *testing.T) {
 	require.NoError(t, sheet.Close())
 }
 
-func TestWriteFile_Width(t *testing.T) {
+func TestEncoder_Width(t *testing.T) {
 	t.Parallel()
 
 	f, err := WriteFile(WriteFileOptions{
@@ -608,7 +609,7 @@ func TestWriteFile_Width(t *testing.T) {
 		V int `excelstruct:"v"`
 	}
 
-	sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+	sheet, err := NewEncoder[v](f, EncoderOptions{
 		TitleScaleAutoWidth: DefaultScaleAutoWidth,
 		TitleMaxWidth:       func(title string) float64 { return -1 },
 	})
@@ -625,7 +626,7 @@ func TestWriteFile_Width(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func TestMarshaler_Panic(t *testing.T) {
+func TestMarshal_Panic(t *testing.T) {
 	t.Parallel()
 
 	t.Run("recover", func(t *testing.T) {
@@ -639,7 +640,7 @@ func TestMarshaler_Panic(t *testing.T) {
 			V string `excel:"v"`
 		}
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+		sheet, err := NewEncoder[v](f, EncoderOptions{
 			StringConv: func(title string, v string) (string, error) {
 				return "", fmt.Errorf("msg")
 			},
@@ -663,10 +664,9 @@ func TestMarshaler_Panic(t *testing.T) {
 			V string `excel:"v"`
 		}
 
-		sheet, err := NewWWorkSpace[v](f, WWorkSpaceOptions{
+		sheet, err := NewEncoder[v](f, EncoderOptions{
 			StringConv: func(title string, v string) (string, error) {
 				panic("msg")
-				return "", nil
 			},
 		})
 		require.NoError(t, err)
@@ -675,5 +675,136 @@ func TestMarshaler_Panic(t *testing.T) {
 		require.PanicsWithValue(t, "msg", func() {
 			_ = sheet.Encode(&v{V: ""})
 		})
+	})
+}
+
+func TestMarshal_StructInline(t *testing.T) {
+	t.Parallel()
+
+	t.Run("ok", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type b struct {
+			A string
+		}
+
+		type v struct {
+			B b `excel:",inline"`
+		}
+
+		sheet, err := NewEncoder[v](f, EncoderOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+		require.NoError(t, sheet.Encode(&v{B: b{A: "hello"}}))
+
+		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
+		require.NoError(t, err)
+
+		want := [][]string{{"A", "hello"}}
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("not export", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type b struct {
+			A string
+		}
+
+		type v struct {
+			b b `excel:",inline"`
+		}
+
+		sheet, err := NewEncoder[v](f, EncoderOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+		require.NoError(t, sheet.Encode(&v{b: b{A: "hello"}}))
+
+		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
+		require.NoError(t, err)
+
+		want := [][]string{}
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("not inline", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type b struct {
+			A string
+		}
+
+		type v struct {
+			B b
+		}
+
+		sheet, err := NewEncoder[v](f, EncoderOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+		require.NoError(t, sheet.Encode(&v{B: b{A: "hello"}}))
+
+		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
+		require.NoError(t, err)
+
+		want := [][]string{}
+		assert.Equal(t, want, got)
+	})
+}
+
+func TestMarshal_UnsupportedType(t *testing.T) {
+	t.Parallel()
+
+	t.Run("func", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type v struct {
+			V func() `excel:"v"`
+		}
+
+		sheet, err := NewEncoder[v](f, EncoderOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		err = sheet.Encode(&v{})
+		got := &UnsupportedTypeError{}
+		assert.ErrorAs(t, err, &got)
+
+		want := &UnsupportedTypeError{Type: reflect.TypeOf(func() {})}
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("ignore slice", func(t *testing.T) {
+		t.Parallel()
+
+		f, err := WriteFile(WriteFileOptions{})
+		require.NoError(t, err)
+		defer f.Close()
+
+		type v struct {
+			V []struct{} `excel:"v"`
+		}
+
+		sheet, err := NewEncoder[v](f, EncoderOptions{})
+		require.NoError(t, err)
+		defer sheet.Close()
+
+		err = sheet.Encode(&v{V: []struct{}{{}}})
+		require.NoError(t, err)
 	})
 }

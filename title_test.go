@@ -22,7 +22,7 @@ func TestNewTitleFromExcel(t *testing.T) {
 		require.NoError(t, err)
 		defer cursor.Close()
 
-		got, err := newTitleFromExcel(titleConfig{rowIndex: 1, conv: defaultTitleConv}, cursor)
+		got, err := newTitleFromFile(titleConfig{rowIndex: 1, conv: defaultTitleConv}, cursor)
 		require.NoError(t, err)
 
 		want := &title{
@@ -65,7 +65,7 @@ func TestNewTitleFromExcel(t *testing.T) {
 		require.NoError(t, err)
 		defer cursor.Close()
 
-		got, err := newTitleFromExcel(titleConfig{rowIndex: 2, conv: defaultTitleConv}, cursor)
+		got, err := newTitleFromFile(titleConfig{rowIndex: 2, conv: defaultTitleConv}, cursor)
 		require.NoError(t, err)
 
 		want := &title{
@@ -106,7 +106,7 @@ func TestNewTitleFromExcel(t *testing.T) {
 			"B": "b",
 			"C": "c",
 		}
-		got, err := newTitleFromExcel(titleConfig{rowIndex: 1, conv: func(title string) string {
+		got, err := newTitleFromFile(titleConfig{rowIndex: 1, conv: func(title string) string {
 			return titleAlias[title]
 		}}, cursor)
 		require.NoError(t, err)

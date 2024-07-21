@@ -59,7 +59,6 @@ type encOpts struct {
 
 type typeOpts struct {
 	structTag string
-	// TODO: deny encode many slices of struct
 }
 
 type encodeState struct {
@@ -586,21 +585,32 @@ func typeFields(t reflect.Type, opts typeOpts) structFields {
 					name = ""
 				}
 
-				anonymous := sf.Anonymous || opts.Contains(optInline)
+				anonymous := sf.Anonymous || (opts.Contains(optInline) && sf.IsExported())
 				if anonymous {
 					t := sf.Type
 					if t.Kind() == reflect.Pointer {
 						t = t.Elem()
 					}
 					if !sf.IsExported() && t.Kind() != reflect.Struct {
-						// Ignore embedded fields of unexported non-struct types.
+						// ignore embedded fields of unexported non-struct types.
 						continue
 					}
-					// Do not ignore embedded fields of unexported struct types
+
+					// do not ignore embedded fields of unexported struct types
 					// since they may have exported fields.
 				} else if !sf.IsExported() {
-					// Ignore unexported non-embedded fields.
+					// ignore unexported non-embedded fields.
 					continue
+				} else {
+					t := sf.Type
+					if t.Kind() == reflect.Pointer {
+						t = t.Elem()
+					}
+
+					if t.Kind() == reflect.Struct && t != timeType {
+						// ignore struct in struct.
+						continue
+					}
 				}
 
 				index := make([]int, len(f.index)+1)
@@ -732,6 +742,7 @@ func typeByIndex(t reflect.Type, index []int) reflect.Type {
 		}
 		t = t.Field(i).Type
 	}
+
 	return t
 }
 

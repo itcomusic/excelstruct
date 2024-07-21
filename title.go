@@ -48,8 +48,8 @@ type titleName struct {
 	RowData map[int]int // map[indexColumn]row
 }
 
-// newTitleFromExcel returns the title after reading the Excel.
-func newTitleFromExcel(config titleConfig, rows *excelize.Rows) (*title, error) {
+// newTitleFromFile returns the title after reading the Excel.
+func newTitleFromFile(config titleConfig, rows *excelize.Rows) (*title, error) {
 	i := 1
 	// <= because Next() have to put the pointer to the index row
 	for ; i <= config.rowIndex; i++ {

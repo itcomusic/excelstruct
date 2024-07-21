@@ -90,8 +90,8 @@ func (o *WriteFileOptions) initDefault() {
 	}
 }
 
-// WWorkSpaceOptions is the options for write workspace.
-type WWorkSpaceOptions struct {
+// EncoderOptions is the options for write workspace.
+type EncoderOptions struct {
 	SheetName             string
 	TitleRowIndex         int
 	TitleName             []string
@@ -110,7 +110,7 @@ type WWorkSpaceOptions struct {
 	CellBorder            []excelize.Border
 }
 
-func (o *WWorkSpaceOptions) initDefault() {
+func (o *EncoderOptions) initDefault() {
 	if o.SheetName == "" {
 		o.SheetName = DefaultSheetName
 	}
@@ -154,8 +154,8 @@ func (o *WWorkSpaceOptions) initDefault() {
 	}
 }
 
-// RWorkSpaceOptions is the options for read workspace.
-type RWorkSpaceOptions struct {
+// DecoderOptions is the options for read workspace.
+type DecoderOptions struct {
 	SheetName     string
 	TitleRowIndex int
 	TitleConv     TitleConv
@@ -165,7 +165,7 @@ type RWorkSpaceOptions struct {
 	StructTag     string
 }
 
-func (o *RWorkSpaceOptions) initDefault() {
+func (o *DecoderOptions) initDefault() {
 	if o.SheetName == "" {
 		o.SheetName = DefaultSheetName
 	}
