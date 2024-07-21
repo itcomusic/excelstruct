@@ -23,7 +23,7 @@ func main() {
 	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
 	defer f.Close()
 
-	sheet, _ := excelstruct.NewWWorkSpace[WriteExcel](f, excelstruct.WWorkSpaceOptions{})
+	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{})
 	defer sheet.Close()
 
 	_ = sheet.Encode(&WriteExcel{

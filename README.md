@@ -52,7 +52,7 @@ func main() {
 	f, _ := excelstruct.OpenFile(excelstruct.OpenFileOptions{FilePath: "read.xlsx"})
 	defer f.Close()
 
-	sheet, _ := excelstruct.NewRWorkSpace[ReadExcel](f, excelstruct.RWorkSpaceOptions{})
+	sheet, _ := excelstruct.NewDecoder[ReadExcel](f, excelstruct.DecoderOptions{})
 	defer sheet.Close()
 
 	var got []ReadExcel
@@ -87,7 +87,7 @@ func main() {
 	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
 	defer f.Close()
 
-	sheet, _ := excelstruct.NewWWorkSpace[WriteExcel](f, excelstruct.WWorkSpaceOptions{})
+	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{})
 	defer sheet.Close()
 
 	_ = sheet.Encode(&WriteExcel{
@@ -121,7 +121,7 @@ func main() {
 	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "dv.xlsx"})
 	defer f.Close()
 
-	list, _ := excelstruct.NewWWorkSpace[map[string][]string](f, excelstruct.WWorkSpaceOptions{
+	list, _ := excelstruct.NewEncoder[map[string][]string](f, excelstruct.EncoderOptions{
 		SheetName:   "list",
 		TitleName:   []string{columnName},
 		Orientation: excelstruct.OrientationColumn,
@@ -129,7 +129,7 @@ func main() {
 	defer list.Close()
 	_ = list.Encode(&map[string][]string{columnName: {"Gopher", "Rob Pike"}})
 
-	sheet, _ := excelstruct.NewWWorkSpace[WriteExcel](f, excelstruct.WWorkSpaceOptions{
+	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{
 		DataValidation: dataValidation(list),
 	})
 	defer sheet.Close()
@@ -140,7 +140,7 @@ func main() {
 	})
 }
 
-func dataValidation(sheet *excelstruct.WWorkSpace[map[string][]string]) func(title string) (*excelize.DataValidation, error) {
+func dataValidation(sheet *excelstruct.Encoder[map[string][]string]) func(title string) (*excelize.DataValidation, error) {
 	return func(title string) (*excelize.DataValidation, error) {
 		switch title {
 		case columnName:

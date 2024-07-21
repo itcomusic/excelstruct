@@ -26,7 +26,7 @@ func main() {
 	f, _ := excelstruct.OpenFile(excelstruct.OpenFileOptions{FilePath: "read.xlsx"})
 	defer f.Close()
 
-	sheet, _ := excelstruct.NewRWorkSpace[ReadExcel](f, excelstruct.RWorkSpaceOptions{})
+	sheet, _ := excelstruct.NewDecoder[ReadExcel](f, excelstruct.DecoderOptions{})
 	defer sheet.Close()
 
 	var got []ReadExcel
