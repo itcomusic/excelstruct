@@ -27,10 +27,17 @@ func (s *stringType) UnmarshalXLSXValue(value []string) error {
 	return nil
 }
 
-type structType struct{}
+type structType struct {
+	value string
+}
 
 func (st *structType) MarshalXLSXValue() ([]string, error) {
-	return []string{"struct value"}, nil
+	return []string{st.value + " world"}, nil
+}
+
+func (st *structType) UnmarshalXLSXValue(value []string) error {
+	st.value = value[0] + "!"
+	return nil
 }
 
 type baseType struct {
@@ -70,6 +77,7 @@ type baseType struct {
 type unmarshalerType struct {
 	String  stringType  `excel:"string"`
 	PString *stringType `excel:"pstring"`
+	Struct  structType  `excel:"int"`
 }
 
 type sliceType struct {
@@ -192,10 +200,13 @@ func TestUnmarshal(t *testing.T) {
 
 		var got []unmarshalerType
 		require.NoError(t, sheet.All(&got))
-		assert.Equal(t, []unmarshalerType{{
+
+		want := []unmarshalerType{{
 			String:  "hello world",
 			PString: ptrV(stringType("hello world")),
-		}}, got)
+			Struct:  structType{"1!"},
+		}}
+		assert.Equal(t, want, got)
 	})
 
 	t.Run("inline", func(t *testing.T) {

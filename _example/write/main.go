@@ -5,10 +5,10 @@ import (
 )
 
 type WriteExcel struct {
-	Int       int             `excel:"int"`
-	String    string          `excel:"string"`
-	Slice     []string        `excel:"slice"`
-	Marshaler *valueMarshaler `excel:"marshaler"`
+	Int       int             `excel:"i"`
+	String    string          `excel:"s"`
+	Slice     []string        `excel:"a"`
+	Marshaler *valueMarshaler `excel:"m"`
 }
 
 type valueMarshaler struct {

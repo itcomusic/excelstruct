@@ -293,6 +293,7 @@ func (d *decodeState) object(data []string, v reflect.Value) error {
 
 	unmarshalError := &UnmarshalError{Row: d.row}
 	fields := cachedTypeFields(t, typeOpts{structTag: d.opts.tag})
+
 	for i := range fields.list {
 		col, ok := d.title.columnIndex(fields.list[i].name)
 		if !ok {

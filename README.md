@@ -28,18 +28,18 @@ go get github.com/itcomusic/excelstruct
 
 ```go
 type ReadExcel struct {
-    Int         int              `excel:"int"`
-    String      string           `excel:"string"`
-    Slice       []string         `excel:"slice"`
-    Unmarshaler valueUnmarshaler `excel:"unmarshaler"`
+    Int         int              `excel:"i"`
+    String      string           `excel:"s"`
+    Slice       []string         `excel:"a"`
+    Unmarshaler valueUnmarshaler `excel:"m"`
 }
 
 type valueUnmarshaler struct {
     value string
 }
 
-func (v *valueUnmarshaler) UnmarshalXLSXValue(value string) error {
-    v.value = value
+func (v *valueUnmarshaler) UnmarshalXLSXValue(value []string) error {
+    v.value = value[0]
     return nil
 }
 
@@ -52,7 +52,7 @@ func main() {
 
     var got []ReadExcel
     _ = sheet.All(&got)
-    fmt.Println(got)
+    fmt.Printf("%+v, got) // [{Int:1 String:str Slice:[value1 value2] Unmarshaler:{value:unmarshaler}}]
 }
 
 ```
