@@ -6,17 +6,18 @@
 
 **excelstruct** is a comprehensive Go package that simplifies working with Excel files by allowing you to easily encode and decode structs.
 Built on top of the powerful [excelize](https://github.com/qax-os/excelize) library, it offers a solution for dealing with excel data in a structured and type-safe manner.
+Examples [example](https://github.com/itcomusic/excelstruct/tree/main/_example)
 
 ## Features
 - **Type Safety**: Work directly with Go structs, leveraging Go's type system
 - **Custom Type Support**: Easily handle custom types with marshaler and unmarshaler interfaces
 - **Slice and Array Support**: Encode and decode slices and arrays seamlessly
 - **Flexible Type Conversion**: Built-in type conversion options eliminate the need for custom types in many cases
-- **Style Support**: Apply Excel border styles and auto alignment
+- **Style Support**: Apply Excel styles
 
 ## Installation
 
-Go version 1.21+
+Go version 1.22+
 
 ```bash
 go get github.com/itcomusic/excelstruct
@@ -61,18 +62,22 @@ func main() {
 }
 ```
 
+#### Write custom styles to excel
+This includes setting borders, alignment, and other cell formatting options to enhance the appearance of your Excel sheets.
 ```go
 package main
 
 import (
+	"github.com/xuri/excelize/v2"
+
 	"github.com/itcomusic/excelstruct"
 )
 
 type WriteExcel struct {
-	Int       int             `excel:"int"`
-	String    string          `excel:"string"`
-	Slice     []string        `excel:"slice"`
-	Marshaler *valueMarshaler `excel:"marshaler"`
+	Int       int             `excel:"i"`
+	String    string          `excel:"s"`
+	Slice     []string        `excel:"a"`
+	Marshaler *valueMarshaler `excel:"m"`
 }
 
 type valueMarshaler struct {
@@ -83,11 +88,75 @@ func (v *valueMarshaler) MarshalXLSXValue() ([]string, error) {
 	return []string{v.value}, nil
 }
 
+var border = []excelize.Border{
+	{
+		Type:  "left",
+		Color: "000000",
+		Style: 1,
+	},
+	{
+		Type:  "top",
+		Color: "000000",
+		Style: 1,
+	},
+	{
+		Type:  "bottom",
+		Color: "000000",
+		Style: 1,
+	},
+	{
+		Type:  "right",
+		Color: "000000",
+		Style: 1,
+	},
+}
+
 func main() {
 	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
 	defer f.Close()
 
-	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{})
+	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{
+		CellStyle: &excelize.Style{Border: border},
+		Style: excelstruct.NameStyle{
+			"center": excelize.Style{
+				// double liine
+				Border: []excelize.Border{
+					{
+						Type:  "left",
+						Color: "000000",
+						Style: 6,
+					},
+					{
+						Type:  "top",
+						Color: "000000",
+						Style: 6,
+					},
+					{
+						Type:  "bottom",
+						Color: "000000",
+						Style: 6,
+					},
+					{
+						Type:  "right",
+						Color: "000000",
+						Style: 6,
+					},
+				},
+				Alignment: &excelize.Alignment{
+					Horizontal:      "center",
+					Indent:          1,
+					JustifyLastLine: true,
+					ReadingOrder:    0,
+					RelativeIndent:  1,
+					ShrinkToFit:     false,
+					Vertical:        "center",
+				},
+			},
+		},
+		TitleStyle: map[string]string{
+			"s": "center",
+		},
+	})
 	defer sheet.Close()
 
 	_ = sheet.Encode(&WriteExcel{
@@ -99,7 +168,7 @@ func main() {
 }
 ```
 
-#### Write column oriented helping for sqref and data validation
+#### Write data validation and column oriented helping for sqref
 ```go
 package main
 
@@ -157,108 +226,6 @@ func dataValidation(sheet *excelstruct.Encoder[map[string][]string]) func(title 
 		}
 		return nil, nil
 	}
-}
-```
-
-#### Write custom styles to excel cells
-This includes setting borders, alignment, and other cell formatting options to enhance the appearance of your Excel sheets.
-```go
-package main
-
-import (
-	"time"
-
-	"github.com/xuri/excelize/v2"
-
-	"github.com/itcomusic/excelstruct"
-)
-
-type WriteExcel struct {
-	Int    int       `excel:"i"`
-	String string    `excel:"s"`
-	Bool   bool      `excel:"b"`
-	Time   time.Time `excel:"t"`
-}
-
-var border = []excelize.Border{
-	{
-		Type:  "left",
-		Color: "000000",
-		Style: 1,
-	},
-	{
-		Type:  "top",
-		Color: "000000",
-		Style: 1,
-	},
-	{
-		Type:  "bottom",
-		Color: "000000",
-		Style: 1,
-	},
-	{
-		Type:  "right",
-		Color: "000000",
-		Style: 1,
-	},
-}
-
-func main() {
-	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
-	defer f.Close()
-
-	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{
-		TitleScaleAutoWidth: excelstruct.DefaultScaleAutoWidth,
-		CellStyle:           &excelize.Style{Border: border},
-		Style: excelstruct.NameStyle{
-			"center": excelize.Style{
-				// dotting
-				Border: []excelize.Border{
-					{
-						Type:  "left",
-						Color: "000000",
-						Style: 6,
-					},
-					{
-						Type:  "top",
-						Color: "000000",
-						Style: 6,
-					},
-					{
-						Type:  "bottom",
-						Color: "000000",
-						Style: 6,
-					},
-					{
-						Type:  "right",
-						Color: "000000",
-						Style: 6,
-					},
-				},
-				Alignment: &excelize.Alignment{
-					Horizontal:      "center",
-					Indent:          1,
-					JustifyLastLine: true,
-					ReadingOrder:    0,
-					RelativeIndent:  1,
-					ShrinkToFit:     false,
-					Vertical:        "center",
-				},
-			},
-		},
-		TitleStyle: map[string]string{
-			"s": "center",
-			"t": "center",
-		},
-	})
-	defer sheet.Close()
-
-	_ = sheet.Encode(&WriteExcel{
-		Int:    1,
-		String: "string",
-		Bool:   true,
-		Time:   time.Now(),
-	})
 }
 ```
 
