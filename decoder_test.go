@@ -27,6 +27,12 @@ func (s *stringType) UnmarshalXLSXValue(value []string) error {
 	return nil
 }
 
+type structType struct{}
+
+func (st *structType) MarshalXLSXValue() ([]string, error) {
+	return []string{"struct value"}, nil
+}
+
 type baseType struct {
 	Int     int       `excel:"int"`
 	Int8    int8      `excel:"int8"`

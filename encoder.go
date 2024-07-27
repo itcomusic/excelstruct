@@ -58,7 +58,8 @@ type encOpts struct {
 }
 
 type typeOpts struct {
-	structTag string
+	structTag    string
+	ignoreStruct bool
 }
 
 type encodeState struct {
@@ -580,12 +581,12 @@ func typeFields(t reflect.Type, opts typeOpts) structFields {
 					continue
 				}
 
-				name, opts := parseTag(tag)
+				name, tagOpts := parseTag(tag)
 				if !isValidTag(name) {
 					name = ""
 				}
 
-				anonymous := sf.Anonymous || (opts.Contains(optInline) && sf.IsExported())
+				anonymous := sf.Anonymous || (tagOpts.Contains(optInline) && sf.IsExported())
 				if anonymous {
 					t := sf.Type
 					if t.Kind() == reflect.Pointer {
@@ -607,7 +608,7 @@ func typeFields(t reflect.Type, opts typeOpts) structFields {
 						t = t.Elem()
 					}
 
-					if t.Kind() == reflect.Struct && t != timeType {
+					if opts.ignoreStruct && t.Kind() == reflect.Struct && t != timeType {
 						// ignore struct in struct.
 						continue
 					}
@@ -635,7 +636,7 @@ func typeFields(t reflect.Type, opts typeOpts) structFields {
 						tag:       tagged,
 						index:     index,
 						typ:       ft,
-						omitEmpty: opts.Contains(optOmitempty),
+						omitEmpty: tagOpts.Contains(optOmitempty),
 					}
 					field.nameBytes = []byte(field.name)
 					field.equalFold = simpleLetterEqualFold
@@ -710,6 +711,7 @@ func typeFields(t reflect.Type, opts typeOpts) structFields {
 
 	for i := range fields {
 		f := &fields[i]
+		opts.ignoreStruct = true
 		f.encoder = typeEncoder(typeByIndex(t, f.index), opts)
 	}
 	nameIndex := make(map[string]int, len(fields))

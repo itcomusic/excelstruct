@@ -12,8 +12,9 @@ import (
 )
 
 type marshalerType struct {
-	String  stringType  `excel:"string"`
-	PString *stringType `excel:"pstring"`
+	String       stringType  `excel:"string"`
+	PString      *stringType `excel:"pstring"`
+	StructString structType  `excel:"struct"`
 }
 
 func TestMarshal(t *testing.T) {
@@ -219,6 +220,7 @@ func TestMarshal(t *testing.T) {
 		assert.Equal(t, [][]string{
 			{"string", "hello world"},
 			{"pstring", "hello world"},
+			{"struct", "struct value"},
 		}, got)
 	})
 
@@ -759,7 +761,9 @@ func TestMarshal_StructInline(t *testing.T) {
 		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
 		require.NoError(t, err)
 
-		want := [][]string{}
+		want := [][]string{
+			{"B"},
+		}
 		assert.Equal(t, want, got)
 	})
 }
