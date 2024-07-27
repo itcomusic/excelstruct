@@ -25,147 +25,132 @@ go get github.com/itcomusic/excelstruct
 ```
 
 ## Usage
+
 ```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/itcomusic/excelstruct"
-)
-
 type ReadExcel struct {
-	Int         int              `excel:"int"`
-	String      string           `excel:"string"`
-	Slice       []string         `excel:"slice"`
-	Unmarshaler valueUnmarshaler `excel:"unmarshaler"`
+    Int         int              `excel:"int"`
+    String      string           `excel:"string"`
+    Slice       []string         `excel:"slice"`
+    Unmarshaler valueUnmarshaler `excel:"unmarshaler"`
 }
 
 type valueUnmarshaler struct {
-	value string
+    value string
 }
 
 func (v *valueUnmarshaler) UnmarshalXLSXValue(value string) error {
-	v.value = value
-	return nil
+    v.value = value
+    return nil
 }
 
 func main() {
-	f, _ := excelstruct.OpenFile(excelstruct.OpenFileOptions{FilePath: "read.xlsx"})
-	defer f.Close()
+    f, _ := excelstruct.OpenFile(excelstruct.OpenFileOptions{FilePath: "read.xlsx"})
+    defer f.Close()
 
-	sheet, _ := excelstruct.NewDecoder[ReadExcel](f, excelstruct.DecoderOptions{})
-	defer sheet.Close()
+    sheet, _ := excelstruct.NewDecoder[ReadExcel](f, excelstruct.DecoderOptions{})
+    defer sheet.Close()
 
-	var got []ReadExcel
-	_ = sheet.All(&got)
-	fmt.Println(got)
+    var got []ReadExcel
+    _ = sheet.All(&got)
+    fmt.Println(got)
 }
+
 ```
 
 #### Write with custom styles to excel
 Setting borders, alignment, and other cell formatting options to enhance the appearance of your Excel sheets.
 ```go
-package main
-
-import (
-	"github.com/xuri/excelize/v2"
-
-	"github.com/itcomusic/excelstruct"
-)
-
 type WriteExcel struct {
-	Int       int             `excel:"i"`
-	String    string          `excel:"s"`
-	Slice     []string        `excel:"a"`
-	Marshaler *valueMarshaler `excel:"m"`
+    Int       int             `excel:"i"`
+    String    string          `excel:"s"`
+    Slice     []string        `excel:"a"`
+    Marshaler *valueMarshaler `excel:"m"`
 }
 
 type valueMarshaler struct {
-	value string
+    value string
 }
 
 func (v *valueMarshaler) MarshalXLSXValue() ([]string, error) {
-	return []string{v.value}, nil
+    return []string{v.value}, nil
 }
 
 var border = []excelize.Border{
-	{
-		Type:  "left",
-		Color: "000000",
-		Style: 1,
-	},
-	{
-		Type:  "top",
-		Color: "000000",
-		Style: 1,
-	},
-	{
-		Type:  "bottom",
-		Color: "000000",
-		Style: 1,
-	},
-	{
-		Type:  "right",
-		Color: "000000",
-		Style: 1,
-	},
+    {
+        Type:  "left",
+        Color: "000000",
+        Style: 1,
+    },
+    {
+        Type:  "top",
+        Color: "000000",
+        Style: 1,
+    },
+    {
+        Type:  "bottom",
+        Color: "000000",
+        Style: 1,
+    },
+    {
+        Type:  "right",
+        Color: "000000",
+        Style: 1,
+    },
 }
 
-func main() {
-	f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
-	defer f.Close()
+    f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
+    defer f.Close()
 
-	sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{
-		CellStyle: &excelize.Style{Border: border},
-		Style: excelstruct.NameStyle{
-			"center": excelize.Style{
-				Border: []excelize.Border{ // double line
-					{
-						Type:  "left",
-						Color: "000000",
-						Style: 6,
-					},
-					{
-						Type:  "top",
-						Color: "000000",
-						Style: 6,
-					},
-					{
-						Type:  "bottom",
-						Color: "000000",
-						Style: 6,
-					},
-					{
-						Type:  "right",
-						Color: "000000",
-						Style: 6,
-					},
-				},
-				Alignment: &excelize.Alignment{
-					Horizontal:      "center",
-					Indent:          1,
-					JustifyLastLine: true,
-					ReadingOrder:    0,
-					RelativeIndent:  1,
-					ShrinkToFit:     false,
-					Vertical:        "center",
-				},
-			},
-		},
-		TitleStyle: map[string]string{
-			"s": "center",
-		},
-	})
-	defer sheet.Close()
+    sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{
+    CellStyle: &excelize.Style{Border: border},
+        Style: excelstruct.NameStyle{
+        "center": excelize.Style{
+            Border: []excelize.Border{ // double line
+                {
+                    Type:  "left",
+                    Color: "000000",
+                    Style: 6,
+                },
+                {
+                    Type:  "top",
+                    Color: "000000",
+                    Style: 6,
+                },
+                {
+                    Type:  "bottom",
+                    Color: "000000",
+                    Style: 6,
+                },
+                {
+                    Type:  "right",
+                    Color: "000000",
+                    Style: 6,
+                },
+                },
+                    Alignment: &excelize.Alignment{
+                    Horizontal:      "center",
+                    Indent:          1,
+                    JustifyLastLine: true,
+                    ReadingOrder:    0,
+                    RelativeIndent:  1,
+                    ShrinkToFit:     false,
+                    Vertical:        "center",
+                },
+            },
+        },
+        TitleStyle: map[string]string{
+            "s": "center",
+        },
+    })
+    defer sheet.Close()
 
-	_ = sheet.Encode(&WriteExcel{
-		Int:       1,
-		String:    "string",
-		Slice:     []string{"value1", "value2"},
-		Marshaler: &valueMarshaler{value: "marshaler"},
-	})
-}
+    _ = sheet.Encode(&WriteExcel{
+        Int:       1,
+        String:    "string",
+        Slice:     []string{"value1", "value2"},
+        Marshaler: &valueMarshaler{value: "marshaler"},
+    })
+
 ```
 
 ## License
