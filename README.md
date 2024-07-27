@@ -4,9 +4,8 @@
 [![pkg-img]][pkg-url]
 [![coverage-img]][coverage-url]
 
-**excelstruct** is a comprehensive Go package that simplifies working with Excel files by allowing you to easily encode and decode structs.
+**excelstruct** is a comprehensive Go package that simplifies working with Excel files by allowing you to easily encode and decode structs [example](https://github.com/itcomusic/excelstruct/tree/main/_example).
 Built on top of the powerful [excelize](https://github.com/qax-os/excelize) library, it offers a solution for dealing with excel data in a structured and type-safe manner.
-Examples [example](https://github.com/itcomusic/excelstruct/tree/main/_example)
 
 ## Features
 - **Type Safety**: Work directly with Go structs, leveraging Go's type system
