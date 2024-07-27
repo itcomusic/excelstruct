@@ -47,7 +47,6 @@ func main() {
 		CellStyle:           &excelize.Style{Border: border},
 		Style: excelstruct.NameStyle{
 			"center": excelize.Style{
-				// dotting
 				Border: []excelize.Border{
 					{
 						Type:  "left",
