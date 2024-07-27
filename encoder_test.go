@@ -587,9 +587,10 @@ func TestEncoder_Style(t *testing.T) {
 	require.NoError(t, err)
 	defer f.Close()
 
-	sheet, err := NewEncoder[v](f, EncoderOptions{Style: NameStyle{
-		"v": &excelize.Style{Border: []excelize.Border{}},
-	}})
+	sheet, err := NewEncoder[v](f, EncoderOptions{
+		Style: NameStyle{
+			"align-center": excelize.Style{Border: []excelize.Border{}},
+		}})
 	require.NoError(t, err)
 
 	require.NoError(t, sheet.Encode(&v{V: 9}))

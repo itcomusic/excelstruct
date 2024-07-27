@@ -2,6 +2,8 @@ module github.com/itcomusic/excelstruct/_example
 
 go 1.22
 
+replace github.com/itcomusic/excelstruct => ../
+
 require (
 	github.com/itcomusic/excelstruct v0.0.0-20240721163539-f2530caf1655
 	github.com/xuri/excelize/v2 v2.8.1

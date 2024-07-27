@@ -1,6 +1,7 @@
 package excelstruct
 
 import (
+	"strings"
 	"time"
 
 	"github.com/xuri/excelize/v2"
@@ -33,7 +34,7 @@ type TitleMaxWidth func(title string) float64
 type DataValidation func(title string) (*excelize.DataValidation, error)
 
 // NameStyle is the naming style to quick search style.
-type NameStyle map[string]*excelize.Style
+type NameStyle map[string]excelize.Style
 
 // ScaleAutoWidth is a scale function for auto width.
 type ScaleAutoWidth func(len int) float64
@@ -54,9 +55,14 @@ type ReadBoolConv func(title string, v string) (bool, error)
 type ReadTimeConv func(v string) (time.Time, error)
 
 // DefaultScaleAutoWidth is the scale function for default font size.
+//
+// PR: https://github.com/qax-os/excelize/pull/1386
 var DefaultScaleAutoWidth = ScaleAutoWidth(func(len int) float64 {
 	return float64(len) + 2.0
 })
+
+// infinityTitleMaxWith is the scale function for infinity font size.
+var infinityTitleMaxWith = TitleMaxWidth(func(_ string) float64 { return -1 })
 
 func defaultTitleConv(title string) string {
 	return title
@@ -99,15 +105,18 @@ type EncoderOptions struct {
 	TitleConv             TitleConv
 	TitleMaxWidth         TitleMaxWidth
 	TitleScaleAutoWidth   ScaleAutoWidth
-	Style                 NameStyle
 	DataValidation        DataValidation
 	ValidationOverRow     int
 	StringConv            WriteStringConv
 	BoolConv              WriteBoolConv
 	Orientation           Orientation
-	CellNumFmt            map[excelize.CellType]int
-	TitleNumFmt           map[string]int
-	CellBorder            []excelize.Border
+
+	CellNumFmt  map[excelize.CellType]int
+	TitleNumFmt map[string]int
+
+	CellStyle  *excelize.Style
+	Style      NameStyle
+	TitleStyle map[string]string // map[title]style
 }
 
 func (o *EncoderOptions) initDefault() {
@@ -141,6 +150,23 @@ func (o *EncoderOptions) initDefault() {
 	if o.TitleNumFmt == nil {
 		o.TitleNumFmt = make(map[string]int)
 	}
+
+	if o.TitleScaleAutoWidth != nil {
+		o.TitleMaxWidth = infinityTitleMaxWith
+	}
+
+	// case-insensitive name
+	nameStyle := make(NameStyle, len(o.Style))
+	for k, v := range o.Style {
+		nameStyle[strings.ToLower(k)] = v
+	}
+	o.Style = nameStyle
+
+	titleStyle := make(map[string]string, len(o.TitleStyle))
+	for k, v := range o.TitleStyle {
+		titleStyle[k] = strings.ToLower(v)
+	}
+	o.TitleStyle = titleStyle
 
 	// remove duplicate title name
 	unique := make(map[string]struct{}, len(o.TitleName))

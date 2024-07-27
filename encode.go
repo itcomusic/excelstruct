@@ -60,10 +60,11 @@ func openExcelFile(path string, o *excelize.Options) (*excelize.File, error) {
 // Encoder is a writing data to a file.
 type Encoder[T any] struct {
 	*excelize.File
-	enc        *encodeState
-	cellBorder []excelize.Border
-	close      bool
-	err        error
+	enc       *encodeState
+	cellStyle *excelize.Style
+	close     bool
+	err       error
+	style     NameStyle
 }
 
 // NewEncoder creates encoder the specified titles and struct.
@@ -87,6 +88,7 @@ func NewEncoder[T any](w *Write, opts EncoderOptions) (*Encoder[T], error) {
 		orient:            opts.Orientation,
 		numFmt:            opts.CellNumFmt,
 		titleNumFmt:       opts.TitleNumFmt,
+		titleStyle:        opts.TitleStyle,
 	}, w.File)
 	if err != nil {
 		return nil, fmt.Errorf("excelstruct: init title: %w", err)
@@ -113,7 +115,8 @@ func NewEncoder[T any](w *Write, opts EncoderOptions) (*Encoder[T], error) {
 			file:                  w.File,
 			row:                   opts.TitleRowIndex + 1, // position the first row of data
 		},
-		cellBorder: opts.CellBorder,
+		cellStyle: opts.CellStyle,
+		style:     opts.Style,
 	}, nil
 }
 
@@ -165,7 +168,6 @@ func (e *Encoder[T]) Close() (err error) {
 }
 
 func (e *Encoder[T]) applyCellStyle() error {
-
 	// aligns by max row data
 	nextRow := e.enc.title.config.rowIndex
 	for _, n := range e.enc.title.name {
@@ -178,10 +180,16 @@ func (e *Encoder[T]) applyCellStyle() error {
 
 	for _, t := range e.enc.title.name {
 		numFmtID := e.enc.title.numFmt[t.Name]
-		styleID, err := e.File.NewStyle(&excelize.Style{
-			Border: e.cellBorder,
-			NumFmt: numFmtID,
-		})
+		var style excelize.Style
+		if e.cellStyle != nil {
+			style = *e.cellStyle
+		}
+		style.NumFmt = numFmtID
+		if err := e.initStyle(t.Name, &style); err != nil {
+			return fmt.Errorf("init style: %w", err)
+		}
+
+		styleID, err := e.File.NewStyle(&style)
 		if err != nil {
 			return fmt.Errorf("new style: %w", err)
 		}
@@ -208,5 +216,24 @@ func (e *Encoder[T]) applyCellStyle() error {
 			return fmt.Errorf("set cell style: %w", err)
 		}
 	}
+	return nil
+}
+
+// initStyle initializes the style by title.
+func (e *Encoder[T]) initStyle(title string, style *excelize.Style) error {
+	styleName, ok := e.enc.title.config.titleStyle[title]
+	if !ok {
+		return nil
+	}
+
+	s, ok := e.style[styleName]
+	if !ok {
+		return fmt.Errorf("style %q not found", styleName)
+	}
+
+	if s.NumFmt == 0 {
+		s.NumFmt = style.NumFmt
+	}
+	*style = s
 	return nil
 }

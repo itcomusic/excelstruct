@@ -28,6 +28,7 @@ type titleConfig struct {
 	orient            Orientation
 	numFmt            map[excelize.CellType]int
 	titleNumFmt       map[string]int
+	titleStyle        map[string]string
 }
 
 // A title is the title of Excel.
