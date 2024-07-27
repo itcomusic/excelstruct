@@ -98,9 +98,10 @@ var border = []excelize.Border{
     },
 }
 
+func main() {  
     f, _ := excelstruct.WriteFile(excelstruct.WriteFileOptions{FilePath: "write.xlsx"})
     defer f.Close()
-
+    
     sheet, _ := excelstruct.NewEncoder[WriteExcel](f, excelstruct.EncoderOptions{
     CellStyle: &excelize.Style{Border: border},
         Style: excelstruct.NameStyle{
@@ -143,14 +144,14 @@ var border = []excelize.Border{
         },
     })
     defer sheet.Close()
-
+	
     _ = sheet.Encode(&WriteExcel{
         Int:       1,
         String:    "string",
         Slice:     []string{"value1", "value2"},
         Marshaler: &valueMarshaler{value: "marshaler"},
     })
-
+}
 ```
 
 ## License
