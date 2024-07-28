@@ -12,9 +12,9 @@ import (
 )
 
 type marshalerType struct {
-	String       stringType  `excel:"string"`
-	PString      *stringType `excel:"pstring"`
-	StructString structType  `excel:"struct"`
+	String  stringType  `excel:"string"`
+	PString *stringType `excel:"pstring"`
+	Struct  structType  `excel:"struct"`
 }
 
 func TestMarshal(t *testing.T) {
@@ -213,6 +213,7 @@ func TestMarshal(t *testing.T) {
 		assert.NoError(t, sheet.Encode(&marshalerType{
 			String:  "hello",
 			PString: ptrV(stringType("hello")),
+			Struct:  structType{value: "hello"},
 		}))
 
 		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
@@ -220,7 +221,7 @@ func TestMarshal(t *testing.T) {
 		assert.Equal(t, [][]string{
 			{"string", "hello world"},
 			{"pstring", "hello world"},
-			{"struct", "struct value"},
+			{"struct", "hello world"},
 		}, got)
 	})
 
