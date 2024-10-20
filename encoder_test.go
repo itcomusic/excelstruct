@@ -82,7 +82,7 @@ func TestMarshal(t *testing.T) {
 			{"float64", "64"},
 			{"string", "hello"},
 			{"bool", "TRUE"},
-			{"date", "12/7/23 00:00"},
+			{"date", "12-07-23"},
 			{"pint", "1"},
 			{"pint8", "8"},
 			{"pint16", "16"},
@@ -97,7 +97,7 @@ func TestMarshal(t *testing.T) {
 			{"pfloat64", "64"},
 			{"pstring", "hello"},
 			{"pbool", "TRUE"},
-			{"pdate", "12/7/23 00:00"},
+			{"pdate", "12-07-23"},
 		}, got)
 	})
 
