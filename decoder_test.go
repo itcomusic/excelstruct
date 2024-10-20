@@ -493,7 +493,6 @@ func TestDecoder_Count(t *testing.T) {
 		want := 3
 		assert.Equal(t, want, sheet.Count())
 	})
-
 }
 
 func ptrV[T any](v T) *T {

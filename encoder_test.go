@@ -165,7 +165,8 @@ func TestMarshal(t *testing.T) {
 
 		assert.NoError(t, sheet.Encode(&arrayType{
 			Strings:  [3]string{"hello", "world", ""},
-			PStrings: [3]*string{ptrV("hello"), ptrV("world"), nil}},
+			PStrings: [3]*string{ptrV("hello"), ptrV("world"), nil},
+		},
 		))
 
 		got, err := f.File.GetCols(sheet.enc.title.config.sheetName)
@@ -479,7 +480,6 @@ func TestEncoder_Orientation(t *testing.T) {
 		}
 		assert.Equal(t, want, got)
 	})
-
 }
 
 func TestEncoder_DataValidation(t *testing.T) {
@@ -593,7 +593,8 @@ func TestEncoder_Style(t *testing.T) {
 	sheet, err := NewEncoder[v](f, EncoderOptions{
 		Style: NameStyle{
 			"align-center": excelize.Style{Border: []excelize.Border{}},
-		}})
+		},
+	})
 	require.NoError(t, err)
 
 	require.NoError(t, sheet.Encode(&v{V: 9}))
